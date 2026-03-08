@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -29,6 +31,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
+import com.amaya.mytracker.ui.theme.MyTrackerTheme
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -47,9 +50,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            var userThemeSelection by remember { mutableStateOf<Boolean?>(null) }
+            val useDarkTheme = userThemeSelection ?: isSystemInDarkTheme()
+
+            MyTrackerTheme(darkTheme = useDarkTheme) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    AppNavigation()
+                    AppNavigation(
+                        isDarkMode = useDarkTheme,
+                        onToggleTheme = { userThemeSelection = !useDarkTheme }
+                    )
                 }
             }
         }
@@ -57,13 +66,16 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(isDarkMode: Boolean, onToggleTheme: () -> Unit) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             TrackerScreen(
                 onNavigateToDetail = { itemId ->
                     navController.navigate("detail/$itemId")
+                },
+                onNavigateToSettings = {
+                    navController.navigate("settings")
                 }
             )
         }
@@ -74,6 +86,13 @@ fun AppNavigation() {
             val itemId = backStackEntry.arguments?.getString("itemId") ?: ""
             DetailScreen(itemId = itemId, onBack = { navController.popBackStack() })
         }
+        composable("settings") {
+            SettingsScreen(
+                isDarkMode = isDarkMode,
+                onToggleTheme = onToggleTheme,
+                onBack = { navController.popBackStack() }
+            )
+        }
     }
 }
 
@@ -81,7 +100,8 @@ fun AppNavigation() {
 @Composable
 fun TrackerScreen(
     viewModel: TrackerViewModel = viewModel(),
-    onNavigateToDetail: (String) -> Unit
+    onNavigateToDetail: (String) -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val lista by viewModel.lista.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
@@ -96,6 +116,11 @@ fun TrackerScreen(
         topBar = {
             TopAppBar(
                 title = { Text("MyTracker", fontWeight = FontWeight.Bold) },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Outlined.Settings, contentDescription = "Ajustes")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -224,7 +249,9 @@ fun TrackItemRow(
             .padding(vertical = 6.dp)
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
-            containerColor = if (item.status == "Completed") Color(0xFFE8F5E9) else MaterialTheme.colorScheme.surfaceVariant
+            containerColor = if (item.status == "Completed") {
+                if (isSystemInDarkTheme()) Color(0xFF1B3921) else Color(0xFFE8F5E9)
+            } else MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -255,7 +282,9 @@ fun TrackItemRow(
                     Text(
                         text = item.status,
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (item.status == "Completed") Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary
+                        color = if (item.status == "Completed") {
+                            if (isSystemInDarkTheme()) Color(0xFF81C784) else Color(0xFF2E7D32)
+                        } else MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -397,7 +426,9 @@ fun DetailScreen(itemId: String, viewModel: TrackerViewModel = viewModel(), onBa
                         onClick = { },
                         label = { Text(item.status) },
                         colors = SuggestionChipDefaults.suggestionChipColors(
-                            labelColor = if (item.status == "Completed") Color(0xFF2E7D32) else MaterialTheme.colorScheme.primary
+                            labelColor = if (item.status == "Completed") {
+                                if (isSystemInDarkTheme()) Color(0xFF81C784) else Color(0xFF2E7D32)
+                            } else MaterialTheme.colorScheme.primary
                         )
                     )
                     Spacer(modifier = Modifier.width(16.dp))
@@ -419,6 +450,81 @@ fun DetailScreen(itemId: String, viewModel: TrackerViewModel = viewModel(), onBa
                     Text("Eliminar de mi lista")
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(isDarkMode: Boolean, onToggleTheme: () -> Unit, onBack: () -> Unit) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Ajustes") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Atrás")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Apariencia",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+            
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (isDarkMode) Icons.Default.NightsStay else Icons.Default.WbSunny,
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("Modo Oscuro")
+                    }
+                    Switch(
+                        checked = isDarkMode,
+                        onCheckedChange = { onToggleTheme() }
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                text = "Sobre la aplicación",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+            
+            ListItem(
+                headlineContent = { Text("Versión") },
+                supportingContent = { Text("1.0.0") }
+            )
+            ListItem(
+                headlineContent = { Text("Desarrollado por") },
+                supportingContent = { Text("Amaya") }
+            )
         }
     }
 }
