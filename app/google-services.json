@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "683283500880",
+    "project_id": "mytracker-8ff46",
+    "storage_bucket": "mytracker-8ff46.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:683283500880:android:00188063bf264c3fa06655",
+        "android_client_info": {
+          "package_name": "com.amaya.mytracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLs1UU144gWn5yYWsHwVDn9sJ-ag51R98"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
