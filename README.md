@@ -1,4 +1,4 @@
-# MyTracker 📚
+# MyTracker 
 
 MyTracker is a professional-grade Android application built with **Jetpack Compose** that allows users to track their progress in Manga and Anime. It leverages the **Jikan API** (MyAnimeList) for data and **Firebase Firestore** for real-time cloud synchronization.
 
